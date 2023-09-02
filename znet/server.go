@@ -66,8 +66,9 @@ func (s *Server) Start() {
 					cnt, err := conn.Read(buf)
 					if err != nil {
 						fmt.Println("receive buf err", err)
-						continue
+						break
 					}
+					fmt.Println("receive buf", string(buf[:cnt]))
 					//回显
 					if _, err = conn.Write(buf[:cnt]); err != nil {
 						fmt.Println("write back buf err", err)
