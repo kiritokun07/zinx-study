@@ -93,3 +93,8 @@ func (s *Server) Serve() {
 	//阻塞，否则主协程退出，listener的协程将会退出
 	select {}
 }
+
+func (s *Server) AddRouter(router ziface.IRouter) {
+	//TODO implement me
+	panic("implement me")
+}
