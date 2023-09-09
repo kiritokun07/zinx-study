@@ -59,6 +59,11 @@ func (s *Server) Start() {
 		}
 		//已经监听成功
 		fmt.Println("start zinx server", s.Name, " success,now listening...")
+
+		//TODO server.go 应该有一个自动生成ID的方法
+		var cid uint32
+		cid = 0
+
 		//3.启动server网络连接业务
 		for {
 			//3.1阻塞等待客户端建立连接请求
@@ -67,27 +72,12 @@ func (s *Server) Start() {
 				fmt.Println("Accept err", err)
 				continue
 			}
-			//3.2 TODO Server.Start() 设置服务器最大连接控制，如果超过最大连接，则关闭新的连接
-			//3.3 TODO Server.Start() 处理该新连接请求的业务方法，此时handler和conn应该是绑定的
-
-			//这里暂时做一个最大512字节的回显服务
-			go func() {
-				//不断地循环，从客户端获取数据
-				for {
-					buf := make([]byte, 512)
-					cnt, err := conn.Read(buf)
-					if err != nil {
-						fmt.Println("receive buf err", err)
-						break
-					}
-					fmt.Println("receive buf", string(buf[:cnt]))
-					//回显
-					if _, err = conn.Write(buf[:cnt]); err != nil {
-						fmt.Println("write back buf err", err)
-						continue
-					}
-				}
-			}()
+			//3.2 TODO 设置服务器最大连接控制，如果超过最大连接，则关闭此连接
+			//3.3 处理该新连接请求的业务方法，此时handler和conn应该是绑定的
+			dealConn := NewConnection(conn, cid, CallBackToClient)
+			cid++
+			//3.4 启动当前连接的处理业务
+			go dealConn.Start()
 		}
 	}()
 }

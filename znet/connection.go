@@ -42,7 +42,7 @@ func (c *Connection) StartReader() {
 	}
 }
 
-func NewConnection(conn *net.TCPConn, connID uint32, callbackApi ziface.HandFunc) *Connection {
+func NewConnection(conn *net.TCPConn, connID uint32, callbackApi ziface.HandFunc) ziface.IConnection {
 	return &Connection{
 		Conn:         conn,
 		ConnID:       connID,
