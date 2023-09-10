@@ -3,6 +3,7 @@ package znet
 import (
 	"errors"
 	"fmt"
+	"myzinx/utils"
 	"myzinx/ziface"
 	"net"
 )
@@ -22,12 +23,13 @@ type Server struct {
 }
 
 // NewServer 创建一个服务器句柄
-func NewServer(name string) ziface.IServer {
+func NewServer() ziface.IServer {
+	obj := utils.GlobalObject
 	return &Server{
-		Name:      name,
+		Name:      obj.Name, //从全局参数获取
 		IPVersion: "tcp4",
-		Ip:        "0.0.0.0",
-		Port:      7777,
+		Ip:        obj.Host,    //从全局参数获取
+		Port:      obj.TcpPort, //从全局参数获取
 		Router:    nil,
 	}
 }
@@ -45,7 +47,9 @@ func CallBackToClient(conn *net.TCPConn, data []byte, cnt int) error {
 
 // Start 开启网络服务
 func (s *Server) Start() {
-	fmt.Printf("[START]Server listener at IP:%s,Port %d,is starting\n", s.Ip, s.Port)
+	fmt.Printf("[START]Server name: %s,listener at %s:%d is starting\n", s.Name, s.Ip, s.Port)
+	fmt.Printf("[Zinx]Version:%s,MaxConn:%d,MaxPacketSize:%d\n", utils.GlobalObject.Version, utils.GlobalObject.MaxConn, utils.GlobalObject.MaxPacketSize)
+	//fmt.Printf("[START]Server listener at IP:%s,Port %d,is starting\n", s.Ip, s.Port)
 	//开启一个go去做服务器端Listener业务
 	go func() {
 		//1.获取一个TCP的Addr
@@ -61,7 +65,7 @@ func (s *Server) Start() {
 			return
 		}
 		//已经监听成功
-		fmt.Println("start zinx server", s.Name, " success,now listening...")
+		fmt.Println("start zinx server [", s.Name, "] success,now listening...")
 
 		//TODO server.go 应该有一个自动生成ID的方法
 		var cid uint32

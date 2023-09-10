@@ -38,7 +38,7 @@ func ClientTest() {
 func TestServer(t *testing.T) {
 	//服务器端测试
 	//1.创建一个Server句柄s
-	s := NewServer("[zinx v0.1]")
+	s := NewServer()
 	//客户端测试
 	go ClientTest()
 	//2.开启服务
