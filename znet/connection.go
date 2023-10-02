@@ -1,7 +1,9 @@
 package znet
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"myzinx/ziface"
 	"net"
 )
@@ -25,18 +27,41 @@ func (c *Connection) StartReader() {
 	defer fmt.Println(c.RemoteAddr().String(), " conn reader exit!")
 	defer c.Stop()
 	for {
-		//将最大的数据读到buf中
-		buf := make([]byte, 512)
-		_, err := c.Conn.Read(buf)
-		if err != nil {
-			fmt.Println("receive buf err", err)
+		//创建拆包解包对象
+		dp := NewDataPack()
+
+		//读取客户端的msg head
+		headData := make([]byte, dp.GetHeadLen())
+		if _, err := io.ReadFull(c.GetTCPConnection(), headData); err != nil {
+			fmt.Println("read msg head error:", err)
 			c.ExitBuffChan <- true
 			continue
 		}
+
+		//拆包 得到msgId和dataLen后放到msg中
+		msg, err := dp.Unpack(headData)
+		if err != nil {
+			fmt.Println("unpack error:", err)
+			c.ExitBuffChan <- true
+			continue
+		}
+		//根据dataLen 读取data 放到msg.Data中
+		var data []byte
+		if msg.GetDataLen() > 0 {
+			data = make([]byte, msg.GetDataLen())
+			if _, err := io.ReadFull(c.GetTCPConnection(), data); err != nil {
+				fmt.Println("read msg dta error:", err)
+				c.ExitBuffChan <- true
+				continue
+			}
+		}
+		//我:获取完整msg的过程可以再次封装
+		msg.SetData(data)
+
 		//得到当前客户端请求的 Request 数据
 		req := Request{
 			conn: c,
-			data: buf,
+			msg:  msg,
 		}
 		go func(request ziface.IRequest) {
 			//执行注册的路由方法
@@ -99,4 +124,24 @@ func (c *Connection) GetConnId() uint32 {
 // RemoteAddr 获取远程客户端地址信息
 func (c *Connection) RemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr()
+}
+
+func (c *Connection) SendMsg(msgId uint32, data []byte) error {
+	if c.isClosed {
+		return errors.New("connection closed when send msg")
+	}
+	//将data封包,并且发送
+	dp := NewDataPack()
+	msg, err := dp.Pack(NewMessage(msgId, data))
+	if err != nil {
+		fmt.Println("pack error msgId=", msgId)
+		return errors.New("pack error msg")
+	}
+	//写回客户端
+	if _, err := c.Conn.Write(msg); err != nil {
+		fmt.Println("write msgId", msgId, "error")
+		c.ExitBuffChan <- true
+		return errors.New("conn write error")
+	}
+	return nil
 }

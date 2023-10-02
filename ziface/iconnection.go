@@ -14,6 +14,8 @@ type IConnection interface {
 	GetConnId() uint32
 	// RemoteAddr 获取远程客户端地址信息
 	RemoteAddr() net.Addr
+	// SendMsg 直接将 Message 数据发送给远程的TCP客户端 (我:可以把基本的interface封装起来)
+	SendMsg(msgId uint32, data []byte) error
 }
 
 // HandFunc 定义一个统一处理连接业务的接口

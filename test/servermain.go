@@ -22,9 +22,11 @@ type PingRouter struct {
 
 func (r *PingRouter) Handle(request ziface.IRequest) {
 	fmt.Println("Call PingRouter Handle")
-	_, err := request.GetConnection().GetTCPConnection().Write([]byte("ping ping ping...\n"))
+	//先读取客户端的数据再回写ping
+	fmt.Printf("receive from client:msgId=%d,data=%s\n", request.GetMsgId(), string(request.GetData()))
+	err := request.GetConnection().SendMsg(1, []byte("ping ping ping..."))
 	if err != nil {
-		fmt.Println("Handle ping error")
+		fmt.Println(err)
 	}
 }
 
