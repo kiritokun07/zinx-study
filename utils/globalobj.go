@@ -26,7 +26,7 @@ var GlobalObject *GlobalObj
 
 // Reload 读取用户的配置文件
 func (g *GlobalObj) Reload() {
-	data, err := os.ReadFile("conf/zinx.json")
+	data, err := os.ReadFile("../conf/zinx.json")
 	if err != nil {
 		panic(err)
 	}
