@@ -22,7 +22,8 @@ type GlobalObj struct {
 	WorkerPoolSize   uint32 `json:"workerPoolSize"`   //业务工作池 Worker 的数量
 	MaxWorkerTaskLen uint32 `json:"maxWorkerTaskLen"` //业务工作 Worker 对应负责的任务队列的最大任务存储数量
 
-	ConfFilePath string
+	ConfFilePath  string
+	MaxMsgChanLen int
 }
 
 // GlobalObject 定义一个全局的对象
@@ -57,6 +58,7 @@ func init() {
 		WorkerPoolSize:   10,
 		MaxWorkerTaskLen: 1024,
 		ConfFilePath:     "../conf/zinx.json",
+		MaxMsgChanLen:    1024,
 	}
 	//从配置文件中加载一些用户配置的参数
 	GlobalObject.Reload()

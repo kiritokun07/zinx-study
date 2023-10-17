@@ -52,10 +52,25 @@ func (r *HelloZinxRouter) Handle(request ziface.IRequest) {
 //	}
 //}
 
+func DoConnectionBegin(conn ziface.IConnection) {
+	fmt.Println("DoConnectionBegin")
+	err := conn.SendMsg(2, []byte("DoConnection BEGIN..."))
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func DoConnectionLost(conn ziface.IConnection) {
+	fmt.Println("DoConnectionLost")
+}
+
 // Server模块的测试函数
 func main() {
 	//1.创建一个Server句柄s
 	s := znet.NewServer()
+	s.SetOnConnStart(DoConnectionBegin)
+	s.SetOnConnStop(DoConnectionLost)
+
 	s.AddRouter(0, &PingRouter{})
 	s.AddRouter(1, &HelloZinxRouter{})
 	//2.开启服务
