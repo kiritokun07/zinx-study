@@ -7,6 +7,7 @@ import (
 	"myzinx/utils"
 	"myzinx/ziface"
 	"net"
+	"sync"
 )
 
 type Connection struct {
@@ -27,6 +28,35 @@ type Connection struct {
 	msgChan chan []byte
 	//有缓冲chan
 	msgBuffChan chan []byte
+	//连接属性
+	property map[string]any
+	//保护连接属性修改的锁
+	propertyLock sync.RWMutex
+}
+
+func (c *Connection) SetProperty(key string, value any) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+
+	c.property[key] = value
+}
+
+func (c *Connection) GetProperty(key string) (any, error) {
+	c.propertyLock.RLock()
+	defer c.propertyLock.RUnlock()
+
+	value, ok := c.property[key]
+	if !ok {
+		return nil, errors.New("no property found")
+	}
+	return value, nil
+}
+
+func (c *Connection) RemoveProperty(key string) {
+	c.propertyLock.Lock()
+	defer c.propertyLock.Unlock()
+
+	delete(c.property, key)
 }
 
 func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandle) ziface.IConnection {
@@ -40,6 +70,7 @@ func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgH
 		ExitBuffChan: make(chan bool, 1),
 		msgChan:      make(chan []byte),
 		msgBuffChan:  make(chan []byte, utils.GlobalObject.MaxMsgChanLen),
+		property:     make(map[string]any),
 	}
 	//将新创建的 Conn 添加到连接管理器中
 	c.TcpServer.GetConnMgr().Add(c)
